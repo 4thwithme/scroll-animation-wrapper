@@ -21,6 +21,7 @@ interface IArgs {
   animatePreScroll?: boolean;
   afterAnimatedIn?: Callback;
   afterAnimatedOut?: Callback;
+  animateOnlyOnScrollDown: boolean;
   children: React.ReactNode;
 }
 
@@ -39,6 +40,7 @@ export const ScrollAnimation = ({
   className,
   animatePreScroll = true,
   children,
+  animateOnlyOnScrollDown = true,
 }: IArgs) => {
   const [state, setState] = useState<{
     classes: string;
@@ -102,52 +104,32 @@ export const ScrollAnimation = ({
     return yPos;
   };
 
-  const getScrollPos = (): number => {
-    if (
-      (scrollableParent as Window & typeof globalThis)?.pageYOffset !==
-      undefined
-    ) {
-      return (scrollableParent as Window & typeof globalThis).pageYOffset;
-    }
-    return (scrollableParent as Element)?.scrollTop;
-  };
+  const getScrollPos = (): number =>
+    (scrollableParent as Window & typeof globalThis)?.pageYOffset !== undefined
+      ? (scrollableParent as Window & typeof globalThis).pageYOffset
+      : (scrollableParent as Element)?.scrollTop;
 
-  const getScrollableParentHeight = (): number => {
-    if ((scrollableParent as Window & typeof globalThis)?.innerHeight) {
-      return (scrollableParent as Window & typeof globalThis).innerHeight;
-    }
-    return (scrollableParent as Element).clientHeight;
-  };
+  const getScrollableParentHeight = (): number =>
+    (scrollableParent as Window & typeof globalThis)?.innerHeight
+      ? (scrollableParent as Window & typeof globalThis).innerHeight
+      : (scrollableParent as Element).clientHeight;
 
-  const getViewportTop = (): number => {
-    return getScrollPos() + offset;
-  };
-
-  const getViewportBottom = (): number => {
-    return getScrollPos() + getScrollableParentHeight() - offset;
-  };
-
-  const isInViewport = (y: number): boolean => {
-    return y >= getViewportTop() && y <= getViewportBottom();
-  };
-
-  const isAboveViewport = (y: number): boolean => {
-    return y < getViewportTop();
-  };
-
-  const isBelowViewport = (y: number): boolean => {
-    return y > getViewportBottom();
-  };
-
-  const inViewport = (elementTop: number, elementBottom: number): boolean => {
-    return (
-      isInViewport(elementTop) ||
-      isInViewport(elementBottom) ||
-      (isAboveViewport(elementTop) && isBelowViewport(elementBottom))
-    );
-  };
-
-  const onScreen = (elementTop: number): boolean => !isBelowScreen(elementTop);
+  const getViewportTop = (): number => getScrollPos() + offset;
+  const getViewportBottom = (): number =>
+    getScrollPos() + getScrollableParentHeight() - offset;
+  const isInViewport = (y: number): boolean =>
+    y >= getViewportTop() && y <= getViewportBottom();
+  const isAboveViewport = (y: number): boolean => y < getViewportTop();
+  const isBelowViewport = (y: number): boolean => y > getViewportBottom();
+  const inViewport = (elementTop: number, elementBottom: number): boolean =>
+    isInViewport(elementTop) ||
+    isInViewport(elementBottom) ||
+    (isAboveViewport(elementTop) && isBelowViewport(elementBottom));
+  const onScreen = (elementTop: number, elementBottom: number): boolean =>
+    animateOnlyOnScrollDown
+      ? !isBelowScreen(elementTop)
+      : !isAboveScreen(elementBottom) && !isBelowScreen(elementTop);
+  const isAboveScreen = (y: number): boolean => y < getScrollPos();
   const isBelowScreen = (y: number): boolean =>
     y > getScrollPos() + getScrollableParentHeight();
   const getVisibility = (): IVisibility => {
@@ -156,7 +138,7 @@ export const ScrollAnimation = ({
     const elementBottom = elementTop + (nodeRef?.current?.clientHeight ?? 0);
     return {
       inViewport: inViewport(elementTop, elementBottom),
-      onScreen: onScreen(elementTop),
+      onScreen: onScreen(elementTop, elementBottom),
     };
   };
 
@@ -185,12 +167,9 @@ export const ScrollAnimation = ({
   const visibilityHasChanged = (
     previousVis: IVisibility,
     currentVis: IVisibility
-  ): boolean => {
-    return (
-      previousVis.inViewport !== currentVis.inViewport ||
-      previousVis.onScreen !== currentVis.onScreen
-    );
-  };
+  ): boolean =>
+    previousVis.inViewport !== currentVis.inViewport ||
+    previousVis.onScreen !== currentVis.onScreen;
 
   const animate = (animation: string, callback: Callback): void => {
     delayedAnimationTimeout = setTimeout(() => {

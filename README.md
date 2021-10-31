@@ -95,6 +95,9 @@ By default if a ScrollAnimation is in view as soon as a page loads, then the ani
 
 Class name string witch will bw added to current css class string if present
 
+**animateOnlyOnScrollDown**
+start animation only on scrolling down
+
 ## License
 
 MIT
