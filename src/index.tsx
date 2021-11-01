@@ -115,26 +115,38 @@ export const ScrollAnimation = ({
       : (scrollableParent as Element).clientHeight;
 
   const getViewportTop = (): number => getScrollPos() + offset;
+
   const getViewportBottom = (): number =>
     getScrollPos() + getScrollableParentHeight() - offset;
+
   const isInViewport = (y: number): boolean =>
     y >= getViewportTop() && y <= getViewportBottom();
+
   const isAboveViewport = (y: number): boolean => y < getViewportTop();
+
   const isBelowViewport = (y: number): boolean => y > getViewportBottom();
+
   const inViewport = (elementTop: number, elementBottom: number): boolean =>
-    isInViewport(elementTop) ||
-    isInViewport(elementBottom) ||
-    (isAboveViewport(elementTop) && isBelowViewport(elementBottom));
+    animateOnlyOnScrollDown
+      ? isInViewport(elementTop) || isAboveViewport(elementTop)
+      : isInViewport(elementTop) ||
+        isInViewport(elementBottom) ||
+        (isAboveViewport(elementTop) && isBelowViewport(elementBottom));
+
   const onScreen = (elementTop: number, elementBottom: number): boolean =>
     animateOnlyOnScrollDown
       ? !isBelowScreen(elementTop)
       : !isAboveScreen(elementBottom) && !isBelowScreen(elementTop);
+
   const isAboveScreen = (y: number): boolean => y < getScrollPos();
+
   const isBelowScreen = (y: number): boolean =>
     y > getScrollPos() + getScrollableParentHeight();
+
   const getVisibility = (): IVisibility => {
     const elementTop =
       getElementTop(nodeRef.current) - getElementTop(scrollableParent);
+
     const elementBottom = elementTop + (nodeRef?.current?.clientHeight ?? 0);
     return {
       inViewport: inViewport(elementTop, elementBottom),

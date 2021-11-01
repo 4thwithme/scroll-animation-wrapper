@@ -1,6 +1,6 @@
 {
   "name": "react-scroll-animation-wrapper",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "create animated react wrapper component",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
